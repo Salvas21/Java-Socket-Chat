@@ -1,109 +1,38 @@
 package Server;
 
-import java.net.*;
-import java.io.*;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.util.ArrayList;
+import java.util.List;
 
-public class Server extends Thread{
-    private final Socket clientSocket;
-    private Observer observer;
+public class Server {
+    private ServerSocket serverSocket;
+    private final List<Connection> connections = new ArrayList<>();
 
-    public Server(Socket socket) {
-        this.clientSocket = socket;
+    public static void main(String[] args) throws IOException {
+        Server server = new Server();
+        server.start();
     }
 
-    public void setObserver(Observer observer) {
-        this.observer = observer;
-    }
+    private void start() throws IOException {
+        serverSocket = new ServerSocket(6666);
 
-    public Observer getObserver() {
-        return this.observer;
-    }
-
-    public void update(String content) throws IOException {
-        PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-        out.println(content);
-    }
-
-    private void write() throws IOException {
-        System.out.println("Start writing");
-        PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-        BufferedReader in = new BufferedReader(
-                new InputStreamReader(clientSocket.getInputStream()));
-        String inputLine;
-        while ((inputLine = in.readLine()) != null) {
-            observer.notify(inputLine);
-//            if (".".equals(inputLine)) {
-//                out.println("bye");
-//                break;
-//            }
-//            if("init".equals(inputLine.substring(0, 4))) {
-//                out.println("bienvenue " + inputLine.substring(5));
-//                break;
-//            }
-            out.println(inputLine);
-        }
-    }
-
-    private void read() throws IOException {
-        System.out.println("Start reading");
-        PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-        String message;
         while (true) {
-//            message = messages.peek();
-//            if(message != null) {
-//                out.println(message);
-//            }
+            Connection connection = new Connection(serverSocket.accept());
+            Observer observer = new Observer();
+            initConnection(observer, connection);
         }
     }
 
-    public void run() {
-        new Thread(() -> {
-            try {
-                read();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }).start();
+    private void initConnection(Observer observer, Connection connection) {
+        connections.forEach(observer::subscribe);
+        connections.forEach(server1 -> server1.getObserver().subscribe(connection));
+        connection.setObserver(observer);
+        connections.add(connection);
+        connection.start();
+    }
 
-        new Thread(() -> {
-            try {
-                write();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }).start();
+    private void stop() throws IOException {
+        serverSocket.close();
     }
 }
-
-
-/*
-
-try {
-            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-            BufferedReader in = new BufferedReader(
-                    new InputStreamReader(clientSocket.getInputStream()));
-
-            String inputLine;
-            String test = null;
-            while ((inputLine = in.readLine()) != null || (test = messages.peek()) != null) {
-                if(test != null) {
-                    out.println(test);
-                }
-
-                if (".".equals(inputLine)) {
-                    out.println("bye");
-                    break;
-                }
-                messages.add(inputLine);
-                out.println(inputLine);
-            }
-
-            in.close();
-            out.close();
-            clientSocket.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-
- */

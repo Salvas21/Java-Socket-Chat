@@ -5,19 +5,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Observer {
-    private List<Server> subsribers = new ArrayList<>();
+    private final List<Connection> subscribers = new ArrayList<>();
 
     public void notify(String content) {
-        subsribers.forEach(server -> {
-            try {
-                server.update(content);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        subscribers.forEach(subscriber -> subscriber.update(content));
     }
 
-    public void subscribe(Server server) {
-        subsribers.add(server);
+    public void subscribe(Connection connection) {
+        subscribers.add(connection);
     }
 }

@@ -6,67 +6,72 @@ import java.util.Scanner;
 
 public class Client {
     private Socket clientSocket;
-    private static PrintWriter out;
-    private static BufferedReader in;
+    private PrintWriter out;
+    private BufferedReader in;
 
-    public void startConnection(String ip, int port) throws IOException {
-        clientSocket = new Socket(ip, port);
-        out = new PrintWriter(clientSocket.getOutputStream(), true);
-        in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-    }
-
-    public String sendMessage(String msg) throws IOException {
-        out.println(msg);
-        String resp = in.readLine();
-        return resp;
-    }
-
-    public void stopConnection() throws IOException {
-        in.close();
-        out.close();
-        clientSocket.close();
-    }
-
-    private static void read() throws IOException {
-        while(true) {
-            System.out.println(in.readLine());
-        }
-    }
-
-    private static void write(Client client) throws IOException {
-        Scanner in = new Scanner(System.in);
-        while(true) {
-            String s = in.nextLine();
-            out.println(s);
-        }
-    }
-
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         Client client = new Client();
         client.startConnection("127.0.0.1", 6666);
+        if(client.initCommunication()) {
+            new Thread(client::read).start();
+            new Thread(client::write).start();
+        } else {
+            System.out.println("Error while connecting.");
+            client.stopConnection();
+        }
+    }
 
-//        System.out.println("Enter your name: ");
-//        String name = in.nextLine();
-//        String initResponse = client.sendMessage("init "+ name);
-//        if(!initResponse.equals("error")) {
-//            System.out.println(initResponse);
-        new Thread(() -> {
+    public void startConnection(String ip, int port) {
+        try {
+            clientSocket = new Socket(ip, port);
+            out = new PrintWriter(clientSocket.getOutputStream(), true);
+            in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private boolean initCommunication() {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Enter your name: ");
+        String name = scanner.nextLine();
+        out.println("init "+ name);
+        String response;
+        try {
+            if(!(response = in.readLine()).equalsIgnoreCase("error")) {
+                System.out.println(response);
+                return true;
+            }
+            return false;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void read() {
+        while(true) {
             try {
-                read();
+                System.out.println(in.readLine());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        }).start();
+        }
+    }
 
-        new Thread(() -> {
-            try {
-                write(client);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }).start();
+    private void write() {
+        Scanner scanner = new Scanner(System.in);
+        while(true) {
+            out.println(scanner.nextLine());
+        }
+    }
 
-        //}
-
+    public void stopConnection() {
+        try {
+            in.close();
+            out.close();
+            clientSocket.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
