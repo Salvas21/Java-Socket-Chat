@@ -7,6 +7,7 @@ public class Connection extends Thread{
     private Observer observer;
     private final PrintWriter out;
     private final BufferedReader in;
+    private String username = "";
 
     public Connection(Socket socket) {
         try {
@@ -18,18 +19,42 @@ public class Connection extends Thread{
     }
 
     public void run() {
-        new Thread(this::write).start();
+        new Thread(this::handle).start();
     }
 
-    private void write() {
+    private void handle() {
+        waitForConnection();
+        handleChat();
+    }
+
+    private void waitForConnection() {
+        String inputLine;
+        boolean accepted = false;
+        try {
+            while (!accepted) {
+                inputLine = in.readLine();
+                if (inputLine != null && inputLine.length() > 4 && inputLine.substring(0, 4).equalsIgnoreCase("init")) {
+                    username = inputLine.substring(5);
+                    if (!username.equals("") && isAvailable()) {
+                        accepted = true;
+                        out.println("bienvenue " + username);
+                    } else {
+                        out.println("username: " + username + " invalide");
+                    }
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void handleChat() {
         String inputLine;
         try {
             while ((inputLine = in.readLine()) != null) {
                 if (".".equals(inputLine)) {
                     out.println("bye");
                     break;
-                } else if ("init".equals(inputLine.substring(0, 4))) {
-                    out.println("bienvenue " + inputLine.substring(5));
                 } else {
                     observer.notify(inputLine);
                     out.println(inputLine);
@@ -38,6 +63,14 @@ public class Connection extends Thread{
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private boolean isAvailable() {
+        return !observer.getUsernames().contains(username);
+    }
+
+    public String getUsername() {
+        return username;
     }
 
     public void update(String content) {
