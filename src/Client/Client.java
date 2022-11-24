@@ -1,23 +1,25 @@
 package Client;
 
+import Client.Windows.ChatRoomFrame;
+import Client.Windows.ConnectionFrame;
+
+import javax.swing.*;
 import java.net.*;
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.concurrent.BlockingQueue;
 
 public class Client {
+    private ConnectionFrame connection;
     private Socket clientSocket;
     private PrintWriter out;
     private BufferedReader in;
 
-    public static void main(String[] args) {
-        Client client = new Client();
-        client.startConnection("127.0.0.1", 6666);
-        if(client.initCommunication()) {
-            new Thread(client::read).start();
-            new Thread(client::write).start();
-        } else {
-            System.out.println("Error while connecting.");
-            client.stopConnection();
+    public Client(String name) {
+        startConnection("127.0.0.1", 6666);
+        if(!initCommunication(name)) {
+            stopConnection();
         }
     }
 
@@ -31,10 +33,7 @@ public class Client {
         }
     }
 
-    private boolean initCommunication() {
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("Enter your name: ");
-        String name = scanner.nextLine();
+    private boolean initCommunication(String name) {
         out.println("init "+ name);
         String response;
         try {
@@ -48,21 +47,18 @@ public class Client {
         }
     }
 
-    private void read() {
+    public void read(BlockingQueue<String> messages) {
         while(true) {
             try {
-                System.out.println(in.readLine());
+                messages.add(in.readLine());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
     }
 
-    private void write() {
-        Scanner scanner = new Scanner(System.in);
-        while(true) {
-            out.println(scanner.nextLine());
-        }
+    public void write(String content) {
+        out.println(content);
     }
 
     public void stopConnection() {
