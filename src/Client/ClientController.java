@@ -16,7 +16,8 @@ public class ClientController {
     ConnectionFrame connectionFrame;
     ChatRoomFrame chatRoomFrame;
     public ClientController() {
-        startLogin();
+        // startLogin();
+        startChatRoom("test");
     }
 
     public void startLogin() {
@@ -30,10 +31,10 @@ public class ClientController {
     }
 
     public void startChatRoom(String name) {
-        client = new Client(name);
+        // client = new Client(name);
         // TODO : voir si la connexion est bonne avant de continuer
         // TODO : et fermer les connexion lorsqu'on quitte
-        new Thread(this::read).start();
+        // new Thread(this::read).start();
 
         chatRoomFrame = new ChatRoomFrame(this, messages);
         chatRoomFrame.setTitle("Chat room " + name);
@@ -42,7 +43,7 @@ public class ClientController {
         chatRoomFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         chatRoomFrame.setResizable(false);
         chatRoomFrame.setLocationRelativeTo(null);
-//        connectionFrame.dispatchEvent(new WindowEvent(connectionFrame, WindowEvent.WINDOW_CLOSING));
+        connectionFrame.setVisible(false);
     }
 
     public void read() {

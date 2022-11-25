@@ -15,6 +15,8 @@ public class ChatRoomFrame extends JFrame {
     JTextArea messagesArea = new JTextArea("", 20, 20);
     JTextField userTextField = new JTextField();
     JButton sendButton = new JButton("Envoyer");
+    JList<String> userList = new JList<>(new String[]{"hugo", "Antoine","hugo", "Antoine","hugo", "Antoine","hugo", "Antoine"});
+    JScrollPane listScroller = new JScrollPane();;
 
     BlockingQueue<String> messages;
 
@@ -56,6 +58,15 @@ public class ChatRoomFrame extends JFrame {
         messagesArea.setEditable(false);
         userTextField.setBounds(15,515,320,50);
         sendButton.setBounds(340,515,100,50);
+
+        listScroller.setViewportView(userList);
+
+        userList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+        userList.setLayoutOrientation(JList.VERTICAL);
+
+
+        listScroller.setPreferredSize(new Dimension(100, 100));
+        listScroller.setBounds(440, 15, 100, 100);
     }
 
     public void setStyle()
@@ -76,5 +87,6 @@ public class ChatRoomFrame extends JFrame {
         container.add(messagesArea);
         container.add(userTextField);
         container.add(sendButton);
+        container.add(listScroller);
     }
 }

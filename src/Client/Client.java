@@ -10,7 +10,7 @@ import java.util.concurrent.BlockingQueue;
 
 public class Client {
     private Socket clientSocket;
-    private String name;
+    private final String name;
     private ObjectOutputStream out;
     private ObjectInputStream in;
 
@@ -20,7 +20,6 @@ public class Client {
         if(!initCommunication(name)) {
             stopConnection();
         }
-
     }
 
     public void startConnection(String ip, int port) {
