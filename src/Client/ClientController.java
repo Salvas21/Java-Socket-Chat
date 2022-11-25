@@ -42,6 +42,7 @@ public class ClientController {
         chatRoomFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         chatRoomFrame.setResizable(false);
         chatRoomFrame.setLocationRelativeTo(null);
+//        connectionFrame.dispatchEvent(new WindowEvent(connectionFrame, WindowEvent.WINDOW_CLOSING));
     }
 
     public void read() {

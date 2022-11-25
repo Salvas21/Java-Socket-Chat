@@ -12,7 +12,7 @@ public class ChatRoomFrame extends JFrame {
 
     ClientController controller;
     Container container = getContentPane();
-    JTextArea messagesArea = new JTextArea("En attente de messages", 20, 20);
+    JTextArea messagesArea = new JTextArea("", 20, 20);
     JTextField userTextField = new JTextField();
     JButton sendButton = new JButton("Envoyer");
 

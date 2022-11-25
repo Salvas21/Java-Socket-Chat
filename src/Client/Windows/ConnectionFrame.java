@@ -39,7 +39,7 @@ public class ConnectionFrame extends JFrame {
         this.setTitle("Login Form");
         this.setVisible(true);
         this.setBounds(10,10,600,400);
-        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         userLabel.setFont(new Font("Calibri", Font.BOLD, 20));

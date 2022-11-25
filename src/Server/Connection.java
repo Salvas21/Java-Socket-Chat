@@ -1,18 +1,22 @@
 package Server;
 
+import Common.ClientPacket;
+import Common.Command;
+import Common.ServerPacket;
+
 import java.net.*;
 import java.io.*;
 
 public class Connection extends Thread{
     private Observer observer;
-    private final PrintWriter out;
-    private final BufferedReader in;
+    private final ObjectOutputStream out;
+    private final ObjectInputStream in;
     private String username = "";
 
     public Connection(Socket socket) {
         try {
-            out = new PrintWriter(socket.getOutputStream(), true);
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            out = new ObjectOutputStream(socket.getOutputStream());
+            in = new ObjectInputStream(socket.getInputStream());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -28,39 +32,42 @@ public class Connection extends Thread{
     }
 
     private void waitForConnection() {
-        String inputLine;
+        ClientPacket clientPacket;
         boolean accepted = false;
         try {
             while (!accepted) {
-                inputLine = in.readLine();
-                if (inputLine != null && inputLine.length() > 4 && inputLine.substring(0, 4).equalsIgnoreCase("init")) {
-                    username = inputLine.substring(5);
-                    if (!username.equals("") && isAvailable()) {
-                        accepted = true;
-                        out.println("bienvenue " + username);
-                    } else {
-                        out.println("username: " + username + " invalide");
-                    }
+                clientPacket = (ClientPacket) in.readObject();
+                username = clientPacket.getName();
+                if (!username.equals("") && isAvailable()) {
+                    accepted = true;
+                    out.writeObject(new ServerPacket("bonjour " + username));
+                } else {
+                    out.writeObject(new ServerPacket("username: " + username + " invalide"));
                 }
             }
-        } catch (IOException e) {
+        } catch (IOException | ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
     }
 
     private void handleChat() {
-        String inputLine;
+        System.out.println("HandleChat");
+        ClientPacket clientPacket;
         try {
-            while ((inputLine = in.readLine()) != null) {
-                if (".".equals(inputLine)) {
-                    out.println("bye");
+            while ((clientPacket = (ClientPacket) in.readObject()) != null) {
+                System.out.println("While");
+                if (clientPacket.getCommand() == Command.QUIT) {
+                    // TODO : close connection
                     break;
                 } else {
-                    observer.notify(inputLine);
-                    out.println(inputLine);
+                    System.out.println(clientPacket.getContent());
+                    // TODO : regarder la commande a qui l'envoyer
+                    // determiner comment l'envoyer
+                    observer.notify(clientPacket.getName() + " : " + clientPacket.getContent());
+                    out.writeObject(new ServerPacket(clientPacket.getName() + " : " + clientPacket.getContent()));
                 }
             }
-        } catch (IOException e) {
+        } catch (IOException | ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
     }
@@ -74,7 +81,11 @@ public class Connection extends Thread{
     }
 
     public void update(String content) {
-        out.println(content);
+        try {
+            out.writeObject(new ServerPacket(content));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public Observer getObserver() {
