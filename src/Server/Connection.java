@@ -40,9 +40,9 @@ public class Connection extends Thread{
                 username = clientPacket.getName();
                 if (!username.equals("") && isAvailable()) {
                     accepted = true;
-                    out.writeObject(new ServerPacket("bonjour " + username));
+                    out.writeObject(new ServerPacket(username, "bonjour " + username));
                 } else {
-                    out.writeObject(new ServerPacket("username: " + username + " invalide"));
+                    out.writeObject(new ServerPacket(username, "username: " + username + " invalide"));
                 }
             }
         } catch (IOException | ClassNotFoundException e) {
@@ -63,11 +63,12 @@ public class Connection extends Thread{
                     System.out.println(clientPacket.getContent());
                     // TODO : regarder la commande a qui l'envoyer
                     // determiner comment l'envoyer
-                    observer.notify(clientPacket.getName() + " : " + clientPacket.getContent());
-                    out.writeObject(new ServerPacket(clientPacket.getName() + " : " + clientPacket.getContent()));
+                    observer.notify(clientPacket.getName(), clientPacket.getContent());
+                    out.writeObject(new ServerPacket(username, clientPacket.getContent()));
                 }
             }
         } catch (IOException | ClassNotFoundException e) {
+            // TODO : lorsqu'un client quitte présentement ça throw l'exception
             throw new RuntimeException(e);
         }
     }
@@ -80,9 +81,9 @@ public class Connection extends Thread{
         return username;
     }
 
-    public void update(String content) {
+    public void update(String sender, String content) {
         try {
-            out.writeObject(new ServerPacket(content));
+            out.writeObject(new ServerPacket(sender, content));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

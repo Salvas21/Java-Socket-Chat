@@ -37,6 +37,8 @@ public class Client {
         ServerPacket response;
         try {
             out.writeObject(new ClientPacket(name, "127.0.0.1", Command.INIT, ""));
+            // TODO : ajouter un code erreur dans le server packet ?
+            // est ce que le server envoit une string "error" ou pas du tout
             if(!(response = (ServerPacket) in.readObject()).getContent().equalsIgnoreCase("error")) {
                 System.out.println(response);
                 return true;
@@ -50,7 +52,8 @@ public class Client {
     public void read(BlockingQueue<String> messages) {
         while(true) {
             try {
-                messages.add(((ServerPacket)in.readObject()).getContent());
+                ServerPacket serverPacket = (ServerPacket) in.readObject();
+                messages.add(serverPacket.getName() + " : " + serverPacket.getContent());
             } catch (IOException | ClassNotFoundException e) {
                 throw new RuntimeException(e);
             }
