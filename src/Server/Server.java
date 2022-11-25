@@ -24,12 +24,12 @@ public class Server {
         }
     }
 
-    private void initConnection(Observer observer, Connection connection) {
+    private void initConnection(Observer observer, Connection newConnection) {
         connections.forEach(observer::subscribe);
-        connections.forEach(server1 -> server1.getObserver().subscribe(connection));
-        connection.setObserver(observer);
-        connections.add(connection);
-        connection.start();
+        connections.forEach(connection -> connection.getObserver().subscribe(newConnection));
+        newConnection.setObserver(observer);
+        connections.add(newConnection);
+        newConnection.start();
     }
 
     private void stop() throws IOException {

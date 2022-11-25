@@ -1,10 +1,9 @@
-package Client.Windows;
+package Client.Views;
 
-import Client.ClientController;
+import Client.Controller.ClientController;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -15,8 +14,10 @@ public class ChatRoomFrame extends JFrame {
     JTextArea messagesArea = new JTextArea("", 20, 20);
     JTextField userTextField = new JTextField();
     JButton sendButton = new JButton("Envoyer");
-    JList<String> userList = new JList<>(new String[]{"hugo", "Antoine","hugo", "Antoine","hugo", "Antoine","hugo", "Antoine"});
-    JScrollPane listScroller = new JScrollPane();;
+    public JList<String> userList = new JList<>();
+    JScrollPane listScroller = new JScrollPane();
+    JLabel chatLabel = new JLabel("Messages");
+    JLabel usersLabel = new JLabel("Utilisateurs connecté");
 
     BlockingQueue<String> messages;
 
@@ -32,7 +33,6 @@ public class ChatRoomFrame extends JFrame {
         setStyle();
         setActions();
         addComponentsToContainer();
-
     }
 
     private void updateMessage() {
@@ -54,24 +54,20 @@ public class ChatRoomFrame extends JFrame {
     }
     public void setLocationAndSize()
     {
-        messagesArea.setBounds(20, 15, 415, 490);
-        messagesArea.setEditable(false);
+        messagesArea.setBounds(20, 30, 415, 475);
         userTextField.setBounds(15,515,320,50);
         sendButton.setBounds(340,515,100,50);
-
-        listScroller.setViewportView(userList);
-
-        userList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
-        userList.setLayoutOrientation(JList.VERTICAL);
-
-
-        listScroller.setPreferredSize(new Dimension(100, 100));
-        listScroller.setBounds(440, 15, 100, 100);
+        listScroller.setBounds(450, 30, 200, 530);
+        chatLabel.setBounds(20, 15, 100, 15);
+        usersLabel.setBounds(450, 15, 200, 15);
     }
 
     public void setStyle()
     {
-
+        messagesArea.setEditable(false);
+        listScroller.setViewportView(userList);
+        userList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+        userList.setLayoutOrientation(JList.VERTICAL);
     }
 
     public void setActions()
@@ -88,5 +84,7 @@ public class ChatRoomFrame extends JFrame {
         container.add(userTextField);
         container.add(sendButton);
         container.add(listScroller);
+        container.add(chatLabel);
+        container.add(usersLabel);
     }
 }

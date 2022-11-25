@@ -1,12 +1,10 @@
-package Client;
+package Client.Controller;
 
-import Client.Windows.ChatRoomFrame;
-import Client.Windows.ConnectionFrame;
+import Client.Model.Client;
+import Client.Views.ChatRoomFrame;
+import Client.Views.ConnectionFrame;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.WindowEvent;
-import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -16,8 +14,7 @@ public class ClientController {
     ConnectionFrame connectionFrame;
     ChatRoomFrame chatRoomFrame;
     public ClientController() {
-        // startLogin();
-        startChatRoom("test");
+        startLogin();
     }
 
     public void startLogin() {
@@ -31,18 +28,19 @@ public class ClientController {
     }
 
     public void startChatRoom(String name) {
-        // client = new Client(name);
+        client = new Client(name);
         // TODO : voir si la connexion est bonne avant de continuer
         // TODO : et fermer les connexion lorsqu'on quitte
-        // new Thread(this::read).start();
+        new Thread(this::read).start();
 
         chatRoomFrame = new ChatRoomFrame(this, messages);
         chatRoomFrame.setTitle("Chat room " + name);
         chatRoomFrame.setVisible(true);
-        chatRoomFrame.setBounds(10,10,800,600);
+        chatRoomFrame.setBounds(10,10,670,600);
         chatRoomFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         chatRoomFrame.setResizable(false);
         chatRoomFrame.setLocationRelativeTo(null);
+        chatRoomFrame.userList.setListData(client.getUsers().toArray(new String[0]));
         connectionFrame.setVisible(false);
     }
 

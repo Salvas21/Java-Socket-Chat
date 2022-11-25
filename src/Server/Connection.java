@@ -40,7 +40,7 @@ public class Connection extends Thread{
                 username = clientPacket.getName();
                 if (!username.equals("") && isAvailable()) {
                     accepted = true;
-                    out.writeObject(new ServerPacket(username, "bonjour " + username));
+                    out.writeObject(new ServerPacket(username, String.join(", ", observer.getUsernames())));
                 } else {
                     out.writeObject(new ServerPacket(username, "username: " + username + " invalide"));
                 }

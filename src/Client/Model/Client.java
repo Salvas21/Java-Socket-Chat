@@ -1,4 +1,4 @@
-package Client;
+package Client.Model;
 
 import Common.ClientPacket;
 import Common.Command;
@@ -6,11 +6,14 @@ import Common.ServerPacket;
 
 import java.net.*;
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.BlockingQueue;
 
 public class Client {
     private Socket clientSocket;
     private final String name;
+    private ArrayList<String> users;
     private ObjectOutputStream out;
     private ObjectInputStream in;
 
@@ -39,7 +42,7 @@ public class Client {
             // TODO : ajouter un code erreur dans le server packet ?
             // est ce que le server envoit une string "error" ou pas du tout
             if(!(response = (ServerPacket) in.readObject()).getContent().equalsIgnoreCase("error")) {
-                System.out.println(response);
+                users = new ArrayList<>(Arrays.asList(response.getContent().split(",")));
                 return true;
             }
             return false;
@@ -75,5 +78,9 @@ public class Client {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public ArrayList<String> getUsers() {
+        return users;
     }
 }

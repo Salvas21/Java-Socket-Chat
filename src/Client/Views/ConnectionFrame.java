@@ -1,6 +1,6 @@
-package Client.Windows;
+package Client.Views;
 
-import Client.ClientController;
+import Client.Controller.ClientController;
 
 import javax.swing.*;
 import java.awt.*;
