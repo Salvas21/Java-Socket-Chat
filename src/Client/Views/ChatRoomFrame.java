@@ -4,6 +4,8 @@ import Client.Controller.ClientController;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -75,6 +77,11 @@ public class ChatRoomFrame extends JFrame {
         sendButton.addActionListener(e -> {
             controller.send(userTextField.getText());
             userTextField.setText("");
+        });
+        this.addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
+                controller.send("quit");
+            }
         });
     }
 

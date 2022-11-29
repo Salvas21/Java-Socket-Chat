@@ -1,10 +1,13 @@
 package Common;
 
 
+import java.util.List;
+
 public class ClientPacket extends Packet {
     private String name;
     private String ip;
     private ClientCommand clientCommand;
+    private List<String> users;
 
     public ClientPacket(String name, String ip, ClientCommand clientCommand, String content) {
         this.name = name;
@@ -12,7 +15,17 @@ public class ClientPacket extends Packet {
         this.clientCommand = clientCommand;
         super.setContent(content);
     }
+    public ClientPacket(String name, String ip, ClientCommand clientCommand, String content, List<String> users) {
+        this.name = name;
+        this.ip = ip;
+        this.clientCommand = clientCommand;
+        this.users = users;
+        super.setContent(content);
+    }
 
+    public List<String> getUsers() {
+        return users;
+    }
     public String getName() {
         return name;
     }

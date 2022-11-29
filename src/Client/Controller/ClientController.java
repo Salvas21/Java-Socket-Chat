@@ -5,6 +5,7 @@ import Client.Views.ChatRoomFrame;
 import Client.Views.ConnectionFrame;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -28,10 +29,10 @@ public class ClientController {
     }
 
     public void startChatRoom(String name) {
-        client = new Client(name);
+
         // TODO : voir si la connexion est bonne avant de continuer
         // TODO : et fermer les connexion lorsqu'on quitte
-        new Thread(this::read).start();
+
 
         chatRoomFrame = new ChatRoomFrame(this, messages);
         chatRoomFrame.setTitle("Chat room " + name);
@@ -40,8 +41,14 @@ public class ClientController {
         chatRoomFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         chatRoomFrame.setResizable(false);
         chatRoomFrame.setLocationRelativeTo(null);
-        chatRoomFrame.userList.setListData(client.getUsers().toArray(new String[0]));
         connectionFrame.setVisible(false);
+
+        client = new Client(name, this);
+        new Thread(this::read).start();
+    }
+
+    public void updateUserList(ArrayList<String> users) {
+        chatRoomFrame.userList.setListData(users.toArray(new String[0]));
     }
 
     public void read() {

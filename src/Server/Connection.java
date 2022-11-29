@@ -29,6 +29,7 @@ public class Connection extends Thread{
 
     private void handle() {
         waitForConnection();
+        observer.notifyUserList();
         handleChat();
     }
 
@@ -41,7 +42,7 @@ public class Connection extends Thread{
                 username = clientPacket.getName();
                 if (!username.equals("") && isAvailable()) {
                     accepted = true;
-                    out.writeObject(new ServerPacket(username, ServerCommand.LIST_CLIENTS, formatUsersList()));
+                    sendListClient();
                 } else {
                     out.writeObject(new ServerPacket(username, ServerCommand.ERROR,"username: " + username + " invalide"));
                 }
@@ -67,14 +68,29 @@ public class Connection extends Thread{
                             observer.notify(clientPacket.getName(), clientPacket.getContent());
                             out.writeObject(new ServerPacket(username, ServerCommand.MESSAGE, clientPacket.getContent()));
                         }
-                        case LIST_CLIENTS -> {
-                            out.writeObject(new ServerPacket(username, ServerCommand.LIST_CLIENTS, formatUsersList()));
+                        case TO_CLIENT, TO_CLIENTS -> {
+                            observer.notifySpecificClient(clientPacket.getName(), clientPacket.getContent(), clientPacket.getUsers());
+                            out.writeObject(new ServerPacket(username, ServerCommand.MESSAGE, clientPacket.getContent()));
+                        }
+                        case LIST_CLIENTS -> out.writeObject(new ServerPacket(username, ServerCommand.LIST_CLIENTS, formatUsersList()));
+                        case QUIT -> {
+                            observer.unsubscribe(username);
+                            observer.notifyUserList();
                         }
                     }
                 }
             }
         } catch (IOException | ClassNotFoundException e) {
             // TODO : lorsqu'un client quitte présentement ça throw l'exception
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void sendListClient() {
+        try {
+            System.out.println("Send list to" + username);
+            out.writeObject(new ServerPacket(username, ServerCommand.LIST_CLIENTS, formatUsersList()));
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
