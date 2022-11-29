@@ -4,12 +4,12 @@ package Common;
 public class ClientPacket extends Packet {
     private String name;
     private String ip;
-    private Command command;
+    private ClientCommand clientCommand;
 
-    public ClientPacket(String name, String ip, Command command, String content) {
+    public ClientPacket(String name, String ip, ClientCommand clientCommand, String content) {
         this.name = name;
         this.ip = ip;
-        this.command = command;
+        this.clientCommand = clientCommand;
         super.setContent(content);
     }
 
@@ -29,12 +29,12 @@ public class ClientPacket extends Packet {
         this.ip = ip;
     }
 
-    public Command getCommand() {
-        return command;
+    public ClientCommand getCommand() {
+        return clientCommand;
     }
 
-    public void setCommand(Command command) {
-        this.command = command;
+    public void setCommand(ClientCommand clientCommand) {
+        this.clientCommand = clientCommand;
     }
 
 }

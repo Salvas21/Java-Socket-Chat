@@ -1,7 +1,8 @@
 package Server;
 
 import Common.ClientPacket;
-import Common.Command;
+import Common.ClientCommand;
+import Common.ServerCommand;
 import Common.ServerPacket;
 
 import java.net.*;
@@ -40,9 +41,9 @@ public class Connection extends Thread{
                 username = clientPacket.getName();
                 if (!username.equals("") && isAvailable()) {
                     accepted = true;
-                    out.writeObject(new ServerPacket(username, String.join(", ", observer.getUsernames())));
+                    out.writeObject(new ServerPacket(username, ServerCommand.LIST_CLIENTS, formatUsersList()));
                 } else {
-                    out.writeObject(new ServerPacket(username, "username: " + username + " invalide"));
+                    out.writeObject(new ServerPacket(username, ServerCommand.ERROR,"username: " + username + " invalide"));
                 }
             }
         } catch (IOException | ClassNotFoundException e) {
@@ -51,20 +52,25 @@ public class Connection extends Thread{
     }
 
     private void handleChat() {
-        System.out.println("HandleChat");
         ClientPacket clientPacket;
         try {
             while ((clientPacket = (ClientPacket) in.readObject()) != null) {
-                System.out.println("While");
-                if (clientPacket.getCommand() == Command.QUIT) {
+                if (clientPacket.getCommand() == ClientCommand.QUIT) {
                     // TODO : close connection
                     break;
                 } else {
-                    System.out.println(clientPacket.getContent());
                     // TODO : regarder la commande a qui l'envoyer
                     // determiner comment l'envoyer
-                    observer.notify(clientPacket.getName(), clientPacket.getContent());
-                    out.writeObject(new ServerPacket(username, clientPacket.getContent()));
+
+                    switch (clientPacket.getCommand()) {
+                        case ALL_CLIENTS -> {
+                            observer.notify(clientPacket.getName(), clientPacket.getContent());
+                            out.writeObject(new ServerPacket(username, ServerCommand.MESSAGE, clientPacket.getContent()));
+                        }
+                        case LIST_CLIENTS -> {
+                            out.writeObject(new ServerPacket(username, ServerCommand.LIST_CLIENTS, formatUsersList()));
+                        }
+                    }
                 }
             }
         } catch (IOException | ClassNotFoundException e) {
@@ -83,7 +89,7 @@ public class Connection extends Thread{
 
     public void update(String sender, String content) {
         try {
-            out.writeObject(new ServerPacket(sender, content));
+            out.writeObject(new ServerPacket(sender, ServerCommand.MESSAGE, content));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -92,7 +98,12 @@ public class Connection extends Thread{
     public Observer getObserver() {
         return this.observer;
     }
+
     public void setObserver(Observer observer) {
         this.observer = observer;
+    }
+
+    private String formatUsersList() {
+        return String.join(", ", observer.getUsernames());
     }
 }

@@ -1,7 +1,7 @@
 package Client.Model;
 
 import Common.ClientPacket;
-import Common.Command;
+import Common.ClientCommand;
 import Common.ServerPacket;
 
 import java.net.*;
@@ -38,7 +38,7 @@ public class Client {
     private boolean initCommunication(String name) {
         ServerPacket response;
         try {
-            out.writeObject(new ClientPacket(name, "127.0.0.1", Command.INIT, ""));
+            out.writeObject(new ClientPacket(name, "127.0.0.1", ClientCommand.INIT, ""));
             // TODO : ajouter un code erreur dans le server packet ?
             // est ce que le server envoit une string "error" ou pas du tout
             if(!(response = (ServerPacket) in.readObject()).getContent().equalsIgnoreCase("error")) {
@@ -53,9 +53,15 @@ public class Client {
 
     public void read(BlockingQueue<String> messages) {
         while(true) {
+
             try {
                 ServerPacket serverPacket = (ServerPacket) in.readObject();
-                messages.add(serverPacket.getName() + " : " + serverPacket.getContent());
+                switch (serverPacket.getServerCommand()) {
+                    case MESSAGE -> messages.add(serverPacket.getName() + " : " + serverPacket.getContent());
+                    case LIST_CLIENTS -> users = new ArrayList<>(Arrays.asList(serverPacket.getContent().split(",")));
+                    case ERROR -> System.out.println("error"); // TODO : implement error check
+                }
+                // TODO : receives correct list, just need to update it in UI
             } catch (IOException | ClassNotFoundException e) {
                 throw new RuntimeException(e);
             }
@@ -64,7 +70,12 @@ public class Client {
 
     public void write(String content) {
         try {
-            out.writeObject(new ClientPacket(name, "127.0.0.1", Command.ALL_CLIENTS, content));
+            if (content.equalsIgnoreCase("list")) {
+                out.writeObject(new ClientPacket(name, "127.0.0.1", ClientCommand.LIST_CLIENTS, ""));
+            } else {
+                out.writeObject(new ClientPacket(name, "127.0.0.1", ClientCommand.ALL_CLIENTS, content));
+            }
+
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
