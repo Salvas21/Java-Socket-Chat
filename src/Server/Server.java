@@ -18,7 +18,7 @@ public class Server {
         serverSocket = new ServerSocket(6666);
 
         while (true) {
-            Connection connection = new Connection(serverSocket.accept());
+            Connection connection = new Connection(serverSocket.accept(), this);
             Observer observer = new Observer();
             initConnection(observer, connection);
         }
@@ -30,6 +30,10 @@ public class Server {
         newConnection.setObserver(observer);
         connections.add(newConnection);
         newConnection.start();
+    }
+
+    public void remove(Connection connection) {
+        connections.remove(connection);
     }
 
     private void stop() throws IOException {

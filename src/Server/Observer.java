@@ -41,6 +41,7 @@ public class Observer {
             }
             if (toDelete != null) {
                 observer.subscribers.remove(toDelete);
+                System.out.println(connection.getUsername() + " deleted " + toDelete.getUsername());
             }
         }
     }

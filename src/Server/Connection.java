@@ -1,7 +1,6 @@
 package Server;
 
 import Common.ClientPacket;
-import Common.ClientCommand;
 import Common.ServerCommand;
 import Common.ServerPacket;
 
@@ -13,8 +12,9 @@ public class Connection extends Thread{
     private final ObjectOutputStream out;
     private final ObjectInputStream in;
     private String username = "";
-
-    public Connection(Socket socket) {
+    private final Server server;
+    public Connection(Socket socket, Server server) {
+        this.server = server;
         try {
             out = new ObjectOutputStream(socket.getOutputStream());
             in = new ObjectInputStream(socket.getInputStream());
@@ -54,29 +54,24 @@ public class Connection extends Thread{
 
     private void handleChat() {
         ClientPacket clientPacket;
+        boolean quit = false;
         try {
-            while ((clientPacket = (ClientPacket) in.readObject()) != null) {
-                if (clientPacket.getCommand() == ClientCommand.QUIT) {
-                    // TODO : close connection
-                    break;
-                } else {
-                    // TODO : regarder la commande a qui l'envoyer
-                    // determiner comment l'envoyer
-
-                    switch (clientPacket.getCommand()) {
-                        case ALL_CLIENTS -> {
-                            observer.notify(clientPacket.getName(), clientPacket.getContent());
-                            out.writeObject(new ServerPacket(username, ServerCommand.MESSAGE, clientPacket.getContent()));
-                        }
-                        case TO_CLIENT, TO_CLIENTS -> {
-                            observer.notifySpecificClient(clientPacket.getName(), clientPacket.getContent(), clientPacket.getUsers());
-                            out.writeObject(new ServerPacket(username, ServerCommand.MESSAGE, clientPacket.getContent()));
-                        }
-                        case LIST_CLIENTS -> out.writeObject(new ServerPacket(username, ServerCommand.LIST_CLIENTS, formatUsersList()));
-                        case QUIT -> {
-                            observer.unsubscribe(username);
-                            observer.notifyUserList();
-                        }
+            while (!quit && (clientPacket = (ClientPacket) in.readObject()) != null) {
+                switch (clientPacket.getCommand()) {
+                    case ALL_CLIENTS -> {
+                        observer.notify(clientPacket.getName(), clientPacket.getContent());
+                        out.writeObject(new ServerPacket(username, ServerCommand.MESSAGE, clientPacket.getContent()));
+                    }
+                    case TO_CLIENT, TO_CLIENTS -> {
+                        observer.notifySpecificClient(clientPacket.getName(), clientPacket.getContent(), clientPacket.getUsers());
+                        out.writeObject(new ServerPacket(username, ServerCommand.MESSAGE, clientPacket.getContent()));
+                    }
+                    case LIST_CLIENTS -> out.writeObject(new ServerPacket(username, ServerCommand.LIST_CLIENTS, formatUsersList()));
+                    case QUIT -> {
+                        observer.unsubscribe(username);
+                        observer.notifyUserList();
+                        quit = true;
+                        server.remove(this);
                     }
                 }
             }

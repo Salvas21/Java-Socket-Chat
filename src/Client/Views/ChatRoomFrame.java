@@ -41,7 +41,6 @@ public class ChatRoomFrame extends JFrame {
         while (true) {
             try {
                 String msg = messages.poll(100, TimeUnit.MILLISECONDS);
-//                System.out.println(msg);
                 if (msg != null) {
                     messagesArea.append(msg + "\n");
                 }

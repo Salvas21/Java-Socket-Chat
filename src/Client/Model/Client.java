@@ -14,7 +14,7 @@ import java.util.concurrent.BlockingQueue;
 
 public class Client {
     private Socket clientSocket;
-    private ClientController controller;
+    private final ClientController controller;
     private final String name;
     private ArrayList<String> users;
     private ObjectOutputStream out;
@@ -60,11 +60,9 @@ public class Client {
         while(true) {
             try {
                 ServerPacket serverPacket = (ServerPacket) in.readObject();
-                System.out.println("Recu");
                 switch (serverPacket.getServerCommand()) {
                     case MESSAGE -> messages.add(serverPacket.getName() + " : " + serverPacket.getContent());
                     case LIST_CLIENTS -> {
-                        System.out.println("Rcu liste client");
                         users = new ArrayList<>(Arrays.asList(serverPacket.getContent().split(", ")));
                         controller.updateUserList(users);
                     }
@@ -87,6 +85,7 @@ public class Client {
                 out.writeObject(new ClientPacket(name, "127.0.0.1", ClientCommand.LIST_CLIENTS, ""));
             } else if (content.equalsIgnoreCase("quit")) {
                 out.writeObject(new ClientPacket(name, "127.0.0.1", ClientCommand.QUIT, ""));
+                // TODO : close local connection, stop read thread
             }  else {
                 out.writeObject(new ClientPacket(name, "127.0.0.1", ClientCommand.ALL_CLIENTS, content));
             }
