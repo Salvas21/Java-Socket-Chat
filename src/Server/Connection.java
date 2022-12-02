@@ -4,15 +4,19 @@ import Common.ClientPacket;
 import Common.ServerCommand;
 import Common.ServerPacket;
 
-import java.net.*;
-import java.io.*;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
 
-public class Connection extends Thread{
-    private Observer observer;
+public class Connection extends Thread {
     private final ObjectOutputStream out;
     private final ObjectInputStream in;
-    private String username = "";
     private final Server server;
+    boolean quitChat = false;
+    private Observer observer;
+    private String username = "";
+
     public Connection(Socket socket, Server server) {
         this.server = server;
         try {
@@ -44,7 +48,7 @@ public class Connection extends Thread{
                     accepted = true;
                     sendListClient();
                 } else {
-                    out.writeObject(new ServerPacket(username, ServerCommand.ERROR,"username: " + username + " invalide"));
+                    out.writeObject(new ServerPacket(username, ServerCommand.ERROR, "username: " + username + " invalide"));
                 }
             }
         } catch (IOException | ClassNotFoundException e) {
@@ -54,36 +58,22 @@ public class Connection extends Thread{
 
     private void handleChat() {
         ClientPacket clientPacket;
-        boolean quit = false;
         try {
-            while (!quit && (clientPacket = (ClientPacket) in.readObject()) != null) {
+            while (!quitChat && (clientPacket = (ClientPacket) in.readObject()) != null) {
                 switch (clientPacket.getCommand()) {
-                    case ALL_CLIENTS -> {
-                        observer.notify(clientPacket.getName(), clientPacket.getContent());
-                        out.writeObject(new ServerPacket(username, ServerCommand.MESSAGE, clientPacket.getContent()));
-                    }
-                    case TO_CLIENT, TO_CLIENTS -> {
-                        observer.notifySpecificClient(clientPacket.getName(), clientPacket.getContent(), clientPacket.getUsers());
-                        out.writeObject(new ServerPacket(username, ServerCommand.MESSAGE, clientPacket.getContent()));
-                    }
-                    case LIST_CLIENTS -> out.writeObject(new ServerPacket(username, ServerCommand.LIST_CLIENTS, formatUsersList()));
-                    case QUIT -> {
-                        observer.unsubscribe(username);
-                        observer.notifyUserList();
-                        quit = true;
-                        server.remove(this);
-                    }
+                    case ALL_CLIENTS -> sendToAll(clientPacket);
+                    case TO_CLIENT, TO_CLIENTS -> sendToSome(clientPacket);
+                    case LIST_CLIENTS -> sendClientList();
+                    case QUIT -> quit();
                 }
             }
         } catch (IOException | ClassNotFoundException e) {
-            // TODO : lorsqu'un client quitte présentement ça throw l'exception
             throw new RuntimeException(e);
         }
     }
 
     public void sendListClient() {
         try {
-            System.out.println("Send list to" + username);
             out.writeObject(new ServerPacket(username, ServerCommand.LIST_CLIENTS, formatUsersList()));
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -116,5 +106,26 @@ public class Connection extends Thread{
 
     private String formatUsersList() {
         return String.join(", ", observer.getUsernames());
+    }
+
+    private void sendToAll(ClientPacket clientPacket) throws IOException {
+        observer.notify(clientPacket.getName(), clientPacket.getContent());
+        out.writeObject(new ServerPacket(username, ServerCommand.MESSAGE, clientPacket.getContent()));
+    }
+
+    private void sendToSome(ClientPacket clientPacket) throws IOException {
+        observer.notifySpecificClient(clientPacket.getName(), clientPacket.getContent(), clientPacket.getUsers());
+        out.writeObject(new ServerPacket(username, ServerCommand.MESSAGE, clientPacket.getContent()));
+    }
+
+    private void sendClientList() throws IOException {
+        out.writeObject(new ServerPacket(username, ServerCommand.LIST_CLIENTS, formatUsersList()));
+    }
+
+    private void quit() {
+        observer.unsubscribe(username);
+        observer.notifyUserList();
+        quitChat = true;
+        server.remove(this);
     }
 }

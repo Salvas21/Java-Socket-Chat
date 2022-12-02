@@ -26,30 +26,34 @@ public class Observer {
         subscribers.add(connection);
     }
 
+    /**
+     * unsubscribes the username from all other connections
+     */
     public void unsubscribe(String username) {
-        // get all connections this user is subscribed to
         for (Connection connection : subscribers) {
-            // get the observer of a connection (remote client)
-            Observer observer = connection.getObserver();
-            Connection toDelete = null;
-            // get all the connection of this observer (all connection remote client subscribed to)
-            for (Connection subscriber : observer.subscribers) {
-                // find ourselves
-                if (subscriber.getUsername().equals(username)) {
-                    toDelete = subscriber;
-                }
-            }
-            if (toDelete != null) {
-                observer.subscribers.remove(toDelete);
-                System.out.println(connection.getUsername() + " deleted " + toDelete.getUsername());
-            }
+            removeUsernameFromOther(connection.getObserver(), username);
         }
     }
 
     public ArrayList<String> getUsernames() {
         var usernames = new ArrayList<String>();
-
         subscribers.forEach(subscriber -> usernames.add(subscriber.getUsername()));
         return usernames;
+    }
+
+    private void removeUsernameFromOther(Observer observer, String username) {
+        Connection toDelete = findUsernameConnection(observer.subscribers, username);
+        if (toDelete != null) {
+            observer.subscribers.remove(toDelete);
+        }
+    }
+
+    private Connection findUsernameConnection(List<Connection> subscribers, String username) {
+        for (Connection subscriber : subscribers) {
+            if (subscriber.getUsername().equals(username)) {
+                return subscriber;
+            }
+        }
+        return null;
     }
 }
