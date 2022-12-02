@@ -43,16 +43,12 @@ public class Observer {
 
     private void removeUsernameFromOther(Observer observer, String username) {
         Connection toDelete = findUsernameConnection(observer.subscribers, username);
-        if (toDelete != null) {
-            observer.subscribers.remove(toDelete);
-        }
+        if (toDelete != null) observer.subscribers.remove(toDelete);
     }
 
     private Connection findUsernameConnection(List<Connection> subscribers, String username) {
         for (Connection subscriber : subscribers) {
-            if (subscriber.getUsername().equals(username)) {
-                return subscriber;
-            }
+            if (subscriber.getUsername().equals(username)) return subscriber;
         }
         return null;
     }

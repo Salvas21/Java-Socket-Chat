@@ -13,11 +13,13 @@ public class Connection extends Thread {
     private final ObjectOutputStream out;
     private final ObjectInputStream in;
     private final Server server;
+    private final String clientIP;
     boolean quitChat = false;
     private Observer observer;
     private String username = "";
 
     public Connection(Socket socket, Server server) {
+        clientIP = socket.getInetAddress().getHostAddress();
         this.server = server;
         try {
             out = new ObjectOutputStream(socket.getOutputStream());
@@ -29,6 +31,34 @@ public class Connection extends Thread {
 
     public void run() {
         new Thread(this::handle).start();
+    }
+
+    public void sendListClient() {
+        try {
+            out.writeObject(new ServerPacket(username, ServerCommand.LIST_CLIENTS, formatUsersList()));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void update(String sender, String content) {
+        try {
+            out.writeObject(new ServerPacket(sender, ServerCommand.MESSAGE, content));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public Observer getObserver() {
+        return this.observer;
+    }
+
+    public void setObserver(Observer observer) {
+        this.observer = observer;
     }
 
     private void handle() {
@@ -44,7 +74,7 @@ public class Connection extends Thread {
             while (!accepted) {
                 clientPacket = (ClientPacket) in.readObject();
                 username = clientPacket.getName();
-                if (!username.equals("") && isAvailable()) {
+                if (usernameIsValid()) {
                     accepted = true;
                     sendListClient();
                 } else {
@@ -72,36 +102,12 @@ public class Connection extends Thread {
         }
     }
 
-    public void sendListClient() {
-        try {
-            out.writeObject(new ServerPacket(username, ServerCommand.LIST_CLIENTS, formatUsersList()));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    private boolean usernameIsValid() {
+        return !username.equals("") && usernameIsAvailable();
     }
 
-    private boolean isAvailable() {
+    private boolean usernameIsAvailable() {
         return !observer.getUsernames().contains(username);
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void update(String sender, String content) {
-        try {
-            out.writeObject(new ServerPacket(sender, ServerCommand.MESSAGE, content));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public Observer getObserver() {
-        return this.observer;
-    }
-
-    public void setObserver(Observer observer) {
-        this.observer = observer;
     }
 
     private String formatUsersList() {

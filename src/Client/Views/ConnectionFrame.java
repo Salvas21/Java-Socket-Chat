@@ -13,8 +13,7 @@ public class ConnectionFrame extends JFrame {
     JButton loginButton = new JButton("Connexion");
 
 
-    public ConnectionFrame(ClientController controller)
-    {
+    public ConnectionFrame(ClientController controller) {
         this.controller = controller;
         setLayoutManager();
         setLocationAndSize();
@@ -23,34 +22,32 @@ public class ConnectionFrame extends JFrame {
         addComponentsToContainer();
 
     }
-    public void setLayoutManager()
-    {
+
+    public void setLayoutManager() {
         container.setLayout(null);
     }
-    public void setLocationAndSize()
-    {
-        userLabel.setBounds(200,130,300,40);
-        userTextField.setBounds(150,185,300,30);
-        loginButton.setBounds(350,225,100,30);
+
+    public void setLocationAndSize() {
+        userLabel.setBounds(200, 130, 300, 40);
+        userTextField.setBounds(150, 185, 300, 30);
+        loginButton.setBounds(350, 225, 100, 30);
     }
 
-    public void setStyle()
-    {
+    public void setStyle() {
         this.setTitle("Login Form");
         this.setVisible(true);
-        this.setBounds(10,10,600,400);
+        this.setBounds(10, 10, 600, 400);
 //        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         userLabel.setFont(new Font("Calibri", Font.BOLD, 20));
     }
 
-    public void setActions()
-    {
+    public void setActions() {
         loginButton.addActionListener(e -> controller.startChatRoom(userTextField.getText()));
     }
-    public void addComponentsToContainer()
-    {
+
+    public void addComponentsToContainer() {
         container.add(userLabel);
         container.add(userTextField);
         container.add(loginButton);

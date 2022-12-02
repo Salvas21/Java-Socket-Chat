@@ -1,35 +1,79 @@
 package Client.Model;
 
 import Client.Controller.ClientController;
-import Common.ClientPacket;
 import Common.ClientCommand;
+import Common.ClientPacket;
+import Common.ServerCommand;
 import Common.ServerPacket;
 
-import java.net.*;
-import java.io.*;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
 public class Client {
-    private Socket clientSocket;
+    private final String serverIP = "127.0.0.1";
+    private final int serverPort = 6666;
     private final ClientController controller;
     private final String name;
+    private Socket clientSocket;
     private ArrayList<String> users;
     private ObjectOutputStream out;
     private ObjectInputStream in;
+    private boolean communicationValid = false;
 
     public Client(String name, ClientController controller) {
         this.name = name;
         this.controller = controller;
-        startConnection("127.0.0.1", 6666);
-        if(!initCommunication(name)) {
+        startConnection(serverIP, serverPort);
+        if (!initCommunication(name)) {
             stopConnection();
         }
     }
 
-    public void startConnection(String ip, int port) {
+    public void read(BlockingQueue<String> messages) {
+        while (isCommunicationValid()) {
+            try {
+                ServerPacket serverPacket = (ServerPacket) in.readObject();
+                switch (serverPacket.getServerCommand()) {
+                    case MESSAGE -> showMessage(messages, serverPacket);
+                    case LIST_CLIENTS -> updateClientsList(serverPacket);
+                    case ERROR -> System.out.println("error");
+                }
+            } catch (IOException | ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    public void write(String content) {
+        try {
+            handleWriteContent(content);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void stopConnection() {
+        try {
+            communicationValid = false;
+            in.close();
+            out.close();
+            clientSocket.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public boolean isCommunicationValid() {
+        return communicationValid;
+    }
+
+    private void startConnection(String ip, int port) {
         try {
             clientSocket = new Socket(ip, port);
             out = new ObjectOutputStream(clientSocket.getOutputStream());
@@ -40,14 +84,13 @@ public class Client {
     }
 
     private boolean initCommunication(String name) {
-        ServerPacket response;
         try {
-            out.writeObject(new ClientPacket(name, "127.0.0.1", ClientCommand.INIT, ""));
-            // TODO : ajouter un code erreur dans le server packet ?
-            // est ce que le server envoit une string "error" ou pas du tout
-            if(!(response = (ServerPacket) in.readObject()).getContent().equalsIgnoreCase("error")) {
+            out.writeObject(new ClientPacket(name, ClientCommand.INIT, ""));
+            ServerPacket response = (ServerPacket) in.readObject();
+            if (!(response.getServerCommand() == ServerCommand.ERROR)) {
                 users = new ArrayList<>(Arrays.asList(response.getContent().split(", ")));
                 controller.updateUserList(users);
+                communicationValid = true;
                 return true;
             }
             return false;
@@ -56,43 +99,56 @@ public class Client {
         }
     }
 
-    public void read(BlockingQueue<String> messages) {
-        while(true) {
-            try {
-                ServerPacket serverPacket = (ServerPacket) in.readObject();
-                switch (serverPacket.getServerCommand()) {
-                    case MESSAGE -> messages.add(serverPacket.getName() + " : " + serverPacket.getContent());
-                    case LIST_CLIENTS -> {
-                        users = new ArrayList<>(Arrays.asList(serverPacket.getContent().split(", ")));
-                        controller.updateUserList(users);
-                    }
-                    case ERROR -> System.out.println("error"); // TODO : implement error check
-                }
-                // TODO : receives correct list, just need to update it in UI
-            } catch (IOException | ClassNotFoundException e) {
-                throw new RuntimeException(e);
-            }
+    private void showMessage(BlockingQueue<String> messages, ServerPacket serverPacket) {
+        messages.add(serverPacket.getName() + " : " + serverPacket.getContent());
+    }
+
+    private void updateClientsList(ServerPacket serverPacket) {
+        users = new ArrayList<>(Arrays.asList(serverPacket.getContent().split(", ")));
+        controller.updateUserList(users);
+    }
+
+    private void handleWriteContent(String content) throws IOException {
+        if (isToSomeClients(content)) {
+            sendToSomeClients(content);
+        } else if (isListClients(content)) {
+            askClientsList();
+        } else if (isQuit(content)) {
+            quit();
+        } else {
+            sendToAllClients(content);
         }
     }
 
-    public void write(String content) {
-        try {
-            if (content.startsWith("@")) {
-                List<String> users = new ArrayList<>();
-                getUsers(content, users);
-                out.writeObject(new ClientPacket(name, "127.0.0.1", ClientCommand.TO_CLIENTS, content, users));
-            } else if (content.equalsIgnoreCase("list")) {
-                out.writeObject(new ClientPacket(name, "127.0.0.1", ClientCommand.LIST_CLIENTS, ""));
-            } else if (content.equalsIgnoreCase("quit")) {
-                out.writeObject(new ClientPacket(name, "127.0.0.1", ClientCommand.QUIT, ""));
-                // TODO : close local connection, stop read thread
-            }  else {
-                out.writeObject(new ClientPacket(name, "127.0.0.1", ClientCommand.ALL_CLIENTS, content));
-            }
+    private boolean isToSomeClients(String content) {
+        return content.startsWith("@");
+    }
 
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    private boolean isListClients(String content) {
+        return content.equalsIgnoreCase("list");
+    }
+
+    private boolean isQuit(String content) {
+        return content.equalsIgnoreCase("quit");
+    }
+
+    private void sendToSomeClients(String content) throws IOException {
+        List<String> users = new ArrayList<>();
+        getUsers(content, users);
+        out.writeObject(new ClientPacket(name, ClientCommand.TO_CLIENTS, content, users));
+    }
+
+    private void sendToAllClients(String content) throws IOException {
+        out.writeObject(new ClientPacket(name, ClientCommand.ALL_CLIENTS, content));
+    }
+
+    private void askClientsList() throws IOException {
+        out.writeObject(new ClientPacket(name, ClientCommand.LIST_CLIENTS, ""));
+    }
+
+    private void quit() throws IOException {
+        out.writeObject(new ClientPacket(name, ClientCommand.QUIT, ""));
+        stopConnection();
     }
 
     private List<String> getUsers(String content, List<String> users) {
@@ -106,13 +162,4 @@ public class Client {
         return getUsers(content.substring(spaceIndex + 1), users);
     }
 
-    public void stopConnection() {
-        try {
-            in.close();
-            out.close();
-            clientSocket.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
 }

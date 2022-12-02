@@ -14,6 +14,7 @@ public class ClientController {
     BlockingQueue<String> messages = new LinkedBlockingQueue<>();
     ConnectionFrame connectionFrame;
     ChatRoomFrame chatRoomFrame;
+
     public ClientController() {
         startLogin();
     }
@@ -22,29 +23,25 @@ public class ClientController {
         connectionFrame = new ConnectionFrame(this);
         connectionFrame.setTitle("Connection");
         connectionFrame.setVisible(true);
-        connectionFrame.setBounds(10,10,600,400);
+        connectionFrame.setBounds(10, 10, 600, 400);
         connectionFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         connectionFrame.setResizable(false);
         connectionFrame.setLocationRelativeTo(null);
     }
 
     public void startChatRoom(String name) {
-
         // TODO : voir si la connexion est bonne avant de continuer
-        // TODO : et fermer les connexion lorsqu'on quitte
-
-
         chatRoomFrame = new ChatRoomFrame(this, messages);
         chatRoomFrame.setTitle("Chat room " + name);
         chatRoomFrame.setVisible(true);
-        chatRoomFrame.setBounds(10,10,670,600);
+        chatRoomFrame.setBounds(10, 10, 670, 600);
         chatRoomFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         chatRoomFrame.setResizable(false);
         chatRoomFrame.setLocationRelativeTo(null);
         connectionFrame.setVisible(false);
 
         client = new Client(name, this);
-        new Thread(this::read).start();
+        if (client.isCommunicationValid()) new Thread(this::read).start();
     }
 
     public void updateUserList(ArrayList<String> users) {
@@ -52,10 +49,10 @@ public class ClientController {
     }
 
     public void read() {
-        client.read(messages);
+        if (client.isCommunicationValid()) client.read(messages);
     }
 
     public void send(String content) {
-        client.write(content);
+        if (client.isCommunicationValid()) client.write(content);
     }
 }
