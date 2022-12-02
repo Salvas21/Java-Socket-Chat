@@ -74,8 +74,10 @@ public class ChatRoomFrame extends JFrame {
     public void setActions()
     {
         sendButton.addActionListener(e -> {
-            controller.send(userTextField.getText());
-            userTextField.setText("");
+            if (!userTextField.getText().equals("")) {
+                controller.send(userTextField.getText());
+                userTextField.setText("");
+            }
         });
         this.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
