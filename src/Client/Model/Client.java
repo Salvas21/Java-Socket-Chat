@@ -35,6 +35,10 @@ public class Client {
         }
     }
 
+    /**
+     * lit les paquets que l'on va recevoir du serveur
+     * @param messages
+     */
     public void read(BlockingQueue<String> messages) {
         while (isCommunicationValid()) {
             try {
@@ -50,6 +54,10 @@ public class Client {
         }
     }
 
+    /**
+     * envoie le message au server
+     * @param content
+     */
     public void write(String content) {
         try {
             handleWriteContent(content);
@@ -83,6 +91,12 @@ public class Client {
         }
     }
 
+    /**
+     * s'occupe d'initialiser la connexion avec le serveur, en envoyant un paquet d'initialisation avec
+     * le nom d'utilisateur, et ensuite de lire la réponse du serveur
+     * @param name
+     * @return
+     */
     private boolean initCommunication(String name) {
         try {
             out.writeObject(new ClientPacket(name, ClientCommand.INIT, ""));
@@ -99,15 +113,29 @@ public class Client {
         }
     }
 
+    /**
+     * envoie le message reçu à l'affichage graphique
+     * @param messages
+     * @param serverPacket
+     */
     private void showMessage(BlockingQueue<String> messages, ServerPacket serverPacket) {
         messages.add(serverPacket.getName() + " : " + serverPacket.getContent());
     }
 
+    /**
+     * envoie la nouvelle liste des utilisateurs à l'affichage graphique
+     * @param serverPacket
+     */
     private void updateClientsList(ServerPacket serverPacket) {
         users = new ArrayList<>(Arrays.asList(serverPacket.getContent().split(", ")));
         controller.updateUserList(users);
     }
 
+    /**
+     * traite le message écrit dans l'interface graphique et l'envoie encapsulé par le bon paquet au serveur
+     * @param content
+     * @throws IOException
+     */
     private void handleWriteContent(String content) throws IOException {
         if (isToSomeClients(content)) {
             sendToSomeClients(content);

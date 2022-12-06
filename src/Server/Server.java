@@ -25,8 +25,8 @@ public class Server {
     }
 
     private void initConnection(Observer observer, Connection newConnection) {
-        subscribeConnectionToAllConnections(observer);
-        subscribeConnectionsToNewConnection(newConnection);
+        subscribeConnectionsToNewConnection(observer);
+        subscribeConnectionToAllConnections(newConnection);
 
         newConnection.setObserver(observer);
         connections.add(newConnection);
@@ -34,14 +34,28 @@ public class Server {
         newConnection.start();
     }
 
-    private void subscribeConnectionToAllConnections(Observer observer) {
+    /**
+     * abonne toutes les connexions existantes à notre nouvelle connexion (notre observer)
+     * permet donc d'envoyer les messages aux autres connexions
+     * @param observer
+     */
+    private void subscribeConnectionsToNewConnection(Observer observer) {
         connections.forEach(observer::subscribe);
     }
 
-    private void subscribeConnectionsToNewConnection(Connection newConnection) {
+    /**
+     * abonne la nouvelle connexion à toutes les connexions existantes
+     * permet donc de recevoir les messages des autres connexions
+     * @param newConnection
+     */
+    private void subscribeConnectionToAllConnections(Connection newConnection) {
         connections.forEach(connection -> connection.getObserver().subscribe(newConnection));
     }
 
+    /**
+     * supprimer une connexion dans le cas d'une fermeture de connexion
+     * @param connection
+     */
     public void remove(Connection connection) {
         connections.remove(connection);
     }

@@ -30,7 +30,6 @@ public class ClientController {
     }
 
     public void startChatRoom(String name) {
-        // TODO : voir si la connexion est bonne avant de continuer
         chatRoomFrame = new ChatRoomFrame(this, messages);
         chatRoomFrame.setTitle("Chat room " + name);
         chatRoomFrame.setVisible(true);
@@ -48,10 +47,17 @@ public class ClientController {
         chatRoomFrame.userList.setListData(users.toArray(new String[0]));
     }
 
+    /**
+     * fait la lecture du client sur un nouveau thread
+     */
     public void read() {
         if (client.isCommunicationValid()) client.read(messages);
     }
 
+    /**
+     * envoie le message rentré dans la boite de dialogue de l'affichage graphique au server
+     * @param content
+     */
     public void send(String content) {
         if (client.isCommunicationValid()) client.write(content);
     }

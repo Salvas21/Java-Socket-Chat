@@ -33,6 +33,9 @@ public class Connection extends Thread {
         new Thread(this::handle).start();
     }
 
+    /**
+     * envoie la liste des clients au client de cette connection
+     */
     public void sendListClient() {
         try {
             out.writeObject(new ServerPacket(username, ServerCommand.LIST_CLIENTS, formatUsersList()));
@@ -45,6 +48,11 @@ public class Connection extends Thread {
         return username;
     }
 
+    /**
+     * envoie le message d'un client au client de cette connection
+     * @param sender
+     * @param content
+     */
     public void update(String sender, String content) {
         try {
             out.writeObject(new ServerPacket(sender, ServerCommand.MESSAGE, content));
@@ -61,12 +69,19 @@ public class Connection extends Thread {
         this.observer = observer;
     }
 
+    /**
+     * fonction principale du thread de la connection
+     */
     private void handle() {
         waitForConnection();
         observer.notifyUserList();
         handleChat();
     }
 
+    /**
+     * fonction qui attend le packet d'initialisation de connection de la part du client,
+     * donc un paquet avec un nom d'utilisateur valide
+     */
     private void waitForConnection() {
         ClientPacket clientPacket;
         boolean accepted = false;
@@ -86,6 +101,9 @@ public class Connection extends Thread {
         }
     }
 
+    /**
+     * fonction qui traite les multiples paquets du client lorsque la connexion est établie
+     */
     private void handleChat() {
         ClientPacket clientPacket;
         try {
@@ -93,7 +111,7 @@ public class Connection extends Thread {
                 switch (clientPacket.getCommand()) {
                     case ALL_CLIENTS -> sendToAll(clientPacket);
                     case TO_CLIENT, TO_CLIENTS -> sendToSome(clientPacket);
-                    case LIST_CLIENTS -> sendClientList();
+                    case LIST_CLIENTS -> sendListClient();
                     case QUIT -> quit();
                 }
             }
@@ -102,6 +120,10 @@ public class Connection extends Thread {
         }
     }
 
+    /**
+     * indique si le nom d'utilisateur est valide, donc non utilisé et non vide
+     * @return
+     */
     private boolean usernameIsValid() {
         return !username.equals("") && usernameIsAvailable();
     }
@@ -110,24 +132,39 @@ public class Connection extends Thread {
         return !observer.getUsernames().contains(username);
     }
 
+    /**
+     * formate la liste des utilisateurs reçue par l'observer
+     * @return
+     */
     private String formatUsersList() {
         return String.join(", ", observer.getUsernames());
     }
 
+    /**
+     * envoie un message à tout les clients
+     * @param clientPacket
+     * @throws IOException
+     */
     private void sendToAll(ClientPacket clientPacket) throws IOException {
         observer.notify(clientPacket.getName(), clientPacket.getContent());
         out.writeObject(new ServerPacket(username, ServerCommand.MESSAGE, clientPacket.getContent()));
     }
 
+    /**
+     * envoie un message à certains clients selon les noms spécifiés dans le paquet
+     * @param clientPacket
+     * @throws IOException
+     */
     private void sendToSome(ClientPacket clientPacket) throws IOException {
         observer.notifySpecificClient(clientPacket.getName(), clientPacket.getContent(), clientPacket.getUsers());
         out.writeObject(new ServerPacket(username, ServerCommand.MESSAGE, clientPacket.getContent()));
     }
 
-    private void sendClientList() throws IOException {
-        out.writeObject(new ServerPacket(username, ServerCommand.LIST_CLIENTS, formatUsersList()));
-    }
-
+    /**
+     * ferme la connexion donc retabli le nom d'utilisateur comme libre
+     * envoie la liste des clients aux clients qui sont toujours connectés
+     * se ferme au côté du serveur
+     */
     private void quit() {
         observer.unsubscribe(username);
         observer.notifyUserList();

@@ -33,6 +33,7 @@ public class ChatRoomFrame extends JFrame {
         setStyle();
         setActions();
         addComponentsToContainer();
+        this.getRootPane().setDefaultButton(sendButton);
     }
 
     private void updateMessage() {
